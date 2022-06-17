@@ -1,9 +1,12 @@
-## start the local dynamoDB using docker-compose
-``` docker-compose up -d```
+## Start the local kafka, zookeeper nodes using docker-compose
+``` docker-compose up -d```  
+This brings up zookeeper: ```localhost:2181```   
+kafka nodes: ```localhost:9092```,```localhost:9093```   
+And also kafdrop, a UI tool to visualize topics and messages on: ```localhost:9000```
 ## Start the springboot application
-## Use below api's
-GET ```localhost:8001/producer```  
-GET ```localhost:8001/consumer```   
+## Use below ReST  APIs in postman
+GET ```localhost:8001/producer```--> check health of producer  
+GET ```localhost:8001/consumer```--> check health of consumer  
 POST ```localhost:8001/producer/orders ```   --> publish messages
 ``` 
 {
@@ -13,4 +16,4 @@ POST ```localhost:8001/producer/orders ```   --> publish messages
 }
 ```
 
-GET ```localhost:8001/consumer/orders  ```   --> retrieve List of unprocessed messages from orders topic
+GET ```localhost:8001/consumer/orders  ```   --> retrieve List of unprocessed messages from orders topic  
