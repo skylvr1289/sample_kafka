@@ -10,7 +10,7 @@ public class ProducerController {
 
     @Autowired
     ProducerService producerService;
-    @GetMapping(path = "/")
+    @GetMapping(path = "/producer")
     public ResponseEntity<String> ping(){
         return ResponseEntity.ok("Producer is running");
     }

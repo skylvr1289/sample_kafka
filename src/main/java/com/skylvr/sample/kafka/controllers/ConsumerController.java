@@ -14,11 +14,11 @@ public class ConsumerController {
     @Autowired
     ConsumerService consumerService;
 
-    @GetMapping
+    @GetMapping(path="/consumer")
     public ResponseEntity<String> ping(){
         return ResponseEntity.ok("Consumer service is up.");
     }
-    @GetMapping(path = "/orders/consumer")
+    @GetMapping(path = "/consumer/orders")
     public ResponseEntity<List<String>> consumeOrders(){
         return ResponseEntity.ok(consumerService.consumeOrders());
     }
