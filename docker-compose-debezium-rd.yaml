@@ -1,0 +1,107 @@
+# docker compose file for rancher desktop in macbook qwith M4 chip
+services:
+  # PostgreSQL database
+  postgres:
+    image: debezium/example-postgres:3.0.0.Final
+    # platform: linux/amd64
+    container_name: postgres
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  # Zookeeper service
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    platform: linux/amd64
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka1:
+    image: confluentinc/cp-kafka:7.4.0
+    platform: linux/amd64
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka1:29092,EXTERNAL://localhost:9092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.4.0
+    platform: linux/amd64
+    depends_on:
+      - zookeeper
+    ports:
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29093,EXTERNAL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2:29093,EXTERNAL://localhost:9093
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:4.0.2
+    platform: linux/amd64
+    ports:
+      - "9001:9000"
+    environment:
+      KAFKA_BROKERCONNECT: kafka1:29092,kafka2:29093
+    depends_on:
+      - kafka1
+      - kafka2
+  # Debezium Kafka Connect service
+  kconnect:
+    image: debezium/connect:2.3
+    platform: linux/amd64
+    ports:
+      - 8083:8083
+    environment:
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+      BOOTSTRAP_SERVERS: kafka1:29092,kafka2:29093
+    links:
+      - zookeeper
+      - postgres
+    depends_on:
+      - kafka1
+      - kafka2
+      - zookeeper
+      - postgres
+
+# Instructions:
+# 1. To register the PostgreSQL Debezium connector, POST the following to http://localhost:8083/connectors
+# {
+#   "name": "inventory-connector",
+#   "config": {
+#     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+#     "database.hostname": "postgres",
+#     "database.port": "5432",
+#     "database.user": "postgres",
+#     "database.password": "postgres",
+#     "database.dbname": "postgres",
+#     "database.server.name": "dbserver1",
+#     "table.include.list": "inventory.customers",
+#     "topic.prefix": "dbserver1"
+#   }
+# }
